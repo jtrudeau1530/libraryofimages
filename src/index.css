@@ -1,9 +1,9 @@
 :root {
   font-family:
+    'Baskerville',
     'Iowan Old Style',
     'Palatino Linotype',
     'Book Antiqua',
-    'URW Palladio L',
     Georgia,
     serif;
   --font-mono:
@@ -12,14 +12,11 @@
     'Liberation Mono',
     'Courier New',
     monospace;
-  --ink: #28170c;
-  --ink-soft: #4a3425;
-  --muted: #75604c;
+  --ink: #f4f7ff;
+  --ink-soft: #d1dcff;
+  --muted: #8d9bc7;
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(214, 163, 111, 0.28), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(96, 53, 25, 0.16), transparent 30%),
-    linear-gradient(180deg, #f8f2e8, #efe4d3);
+  background: #03040b;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -41,26 +38,40 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 96px,
-      rgba(73, 46, 25, 0.03) 96px,
-      rgba(73, 46, 25, 0.03) 97px
-    ),
-    linear-gradient(180deg, #f8f2e8, #efe4d3);
+    radial-gradient(circle at 15% 20%, rgba(79, 184, 255, 0.16), transparent 20%),
+    radial-gradient(circle at 78% 16%, rgba(132, 94, 255, 0.14), transparent 22%),
+    radial-gradient(circle at 85% 68%, rgba(255, 120, 90, 0.14), transparent 18%),
+    radial-gradient(circle at 50% 50%, rgba(19, 24, 60, 0.88), rgba(4, 5, 12, 1) 72%);
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+  background-repeat: repeat;
+  opacity: 0.72;
 }
 
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.52), transparent 18%),
-    radial-gradient(circle at 85% 78%, rgba(188, 120, 61, 0.18), transparent 20%);
-  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(118, 205, 255, 0.75) 0 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(169, 135, 255, 0.6) 0 1px, transparent 1.6px);
+  background-size: 160px 160px, 240px 240px, 320px 320px;
+  background-position: 0 0, 70px 120px, 110px 40px;
+  animation: drift-stars 70s linear infinite;
+}
+
+body::after {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.35) 0 0.8px, transparent 1.2px),
+    radial-gradient(circle, rgba(115, 168, 255, 0.28) 0 0.8px, transparent 1.4px);
+  background-size: 120px 120px, 210px 210px;
+  background-position: 20px 80px, 100px 20px;
+  animation: drift-nebula 110s linear infinite reverse;
 }
 
 a {
@@ -75,5 +86,26 @@ textarea {
 }
 
 #root {
+  position: relative;
   isolation: isolate;
+}
+
+@keyframes drift-stars {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(-80px, 60px, 0) scale(1.06);
+  }
+}
+
+@keyframes drift-nebula {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(60px, -80px, 0) scale(1.08);
+  }
 }

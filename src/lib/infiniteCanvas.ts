@@ -1,3 +1,5 @@
+import CryptoJS from 'crypto-js'
+
 export const IMAGE_DIMENSION = 512
 
 export type ImageMode = 'grayscale' | 'color'
@@ -236,27 +238,35 @@ async function transformBytes(
   operation: 'encrypt' | 'decrypt',
 ) {
   const key = await deriveAesKey(libraryKey, mode)
-  const counter = new Uint8Array(16)
-  const algorithm = { name: 'AES-CTR', counter, length: 64 }
-  const payload = toArrayBuffer(bytes)
+  const iv = zeroWordArray()
 
-  const result =
-    operation === 'encrypt'
-      ? await crypto.subtle.encrypt(algorithm, key, payload)
-      : await crypto.subtle.decrypt(algorithm, key, payload)
+  if (operation === 'encrypt') {
+    const encrypted = CryptoJS.AES.encrypt(bytesToWordArray(bytes), key, {
+      iv,
+      mode: CryptoJS.mode.CTR,
+      padding: CryptoJS.pad.NoPadding,
+    })
 
-  return new Uint8Array(result)
+    return wordArrayToBytes(encrypted.ciphertext)
+  }
+
+  const decrypted = CryptoJS.AES.decrypt(
+    CryptoJS.lib.CipherParams.create({
+      ciphertext: bytesToWordArray(bytes),
+    }),
+    key,
+    {
+      iv,
+      mode: CryptoJS.mode.CTR,
+      padding: CryptoJS.pad.NoPadding,
+    },
+  )
+
+  return wordArrayToBytes(decrypted)
 }
 
 async function deriveAesKey(libraryKey: string, mode: ImageMode) {
-  const material = await sha256(encoder.encode(`inflib.io:${mode}:${libraryKey}`))
-  return crypto.subtle.importKey(
-    'raw',
-    material,
-    { name: 'AES-CTR' },
-    false,
-    ['encrypt', 'decrypt'],
-  )
+  return CryptoJS.SHA256(`inflib.io:${mode}:${libraryKey}`)
 }
 
 async function deriveLibraryId(libraryKey: string) {
@@ -265,7 +275,7 @@ async function deriveLibraryId(libraryKey: string) {
 }
 
 async function sha256(bytes: Uint8Array) {
-  return new Uint8Array(await crypto.subtle.digest('SHA-256', toArrayBuffer(bytes)))
+  return wordArrayToBytes(CryptoJS.SHA256(bytesToWordArray(bytes)))
 }
 
 function encodeBase64Url(bytes: Uint8Array) {
@@ -309,13 +319,6 @@ function concatBytes(a: Uint8Array, b: Uint8Array) {
   return result
 }
 
-function toArrayBuffer(bytes: Uint8Array) {
-  return bytes.buffer.slice(
-    bytes.byteOffset,
-    bytes.byteOffset + bytes.byteLength,
-  ) as ArrayBuffer
-}
-
 function randomBytes(length: number) {
   const bytes = new Uint8Array(length)
   const chunkSize = 65_536
@@ -331,4 +334,29 @@ function toHex(bytes: Uint8Array) {
   return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join(
     '',
   )
+}
+
+function bytesToWordArray(bytes: Uint8Array) {
+  const words: number[] = []
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    words[index >>> 2] |= bytes[index] << (24 - (index % 4) * 8)
+  }
+
+  return CryptoJS.lib.WordArray.create(words, bytes.length)
+}
+
+function wordArrayToBytes(wordArray: CryptoJS.lib.WordArray) {
+  const { sigBytes, words } = wordArray
+  const bytes = new Uint8Array(sigBytes)
+
+  for (let index = 0; index < sigBytes; index += 1) {
+    bytes[index] = (words[index >>> 2] >>> (24 - (index % 4) * 8)) & 0xff
+  }
+
+  return bytes
+}
+
+function zeroWordArray() {
+  return CryptoJS.lib.WordArray.create([0, 0, 0, 0], 16)
 }
